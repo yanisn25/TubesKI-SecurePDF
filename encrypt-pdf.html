@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>SecurePDF - Enkripsi PDF</title>
+        <link rel="stylesheet" href="styles/main.css" />
+    </head>
+
+    <body>
+        <nav>
+            <a href="generate-keys.html">Kunci RSA</a>
+            <a class="selected" href="encrypt-pdf.html">Enkripsi PDF</a>
+            <a href="decrypt-pdf.html">Dekripsi PDF</a>
+        </nav>
+
+        <div class="page">
+            <h1>RSA - Enkripsi PDF</h1>
+            <div class="field">
+                <label for="public-key">RSA Public Key</label>
+                <textarea id="public-key" rows=10></textarea>
+            </div>
+            <div class="field">
+                <label for="file-to-encrypt">Unggah file untuk dienkripsi:</label>
+                <input id="file-to-encrypt" type="file"></input>
+            </div>
+
+            <button id="button">Enkripsi PDF</button>
+            <div id="message"></div>
+
+            <div id="result" class="field">
+                <label for="encrypted-file">Encrypted File</label>
+                <div><a id="encrypted-file"></a></div>
+            </div>
+        </div>
+
+    </body>
+
+    <script src="scripts/encoding-helper.js"></script>
+    <script src="scripts/encryption-helper.js"></script>
+    <script>
+        (function () {
+            var publicKey = document.getElementById("public-key");
+            var fileToEncrypt = document.getElementById("file-to-encrypt");
+            var button = document.getElementById("button");
+            var message = document.getElementById("message");
+            var encryptedFile = document.getElementById("encrypted-file");
+            var result = document.getElementById("result");
+
+            var success = function (data) {
+                var unencryptedFile = fileToEncrypt.files[0];
+
+                encryptedFile.href = window.URL.createObjectURL(
+                    new Blob([data], { type: "application/octet-stream" }));
+                encryptedFile.download = encryptedFile.innerText
+                    = unencryptedFile.name + ".encrypted";
+                result.style.display = "block";
+
+                message.innerText = null;
+                button.disabled = false;
+            };
+
+            var error = function (error) {
+                message.innerText = error;
+                button.disabled = false;
+            };
+
+            var process = function () {
+                message.innerText = "Memproses...";
+                button.disabled = true;
+
+                if (publicKey.value.trim() === "")
+                    return error("Public key harus spesifik.");
+
+                var publicKeyArrayBuffer = null;
+                try { publicKeyArrayBuffer = pemToArrayBuffer(publicKey.value.trim()); }
+                catch (_) { return error("Public key invalid."); }
+
+                if (!fileToEncrypt.files.length)
+                    return error("Kamu perlu memilih file untuk enkripsi.");
+
+                var fileReader = new FileReader();
+                fileReader.onload = function () {
+                    rsaEncrypt(this.result, publicKeyArrayBuffer).then(success, error);
+                };
+                fileReader.readAsArrayBuffer(fileToEncrypt.files[0]);
+            }; 
+
+            button.addEventListener("click", process);
+        })();
+    </script>
+</html>

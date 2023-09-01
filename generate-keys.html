@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SecurePDF - Generate RSA Keys</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <style>
+      .field,
+      #button {
+        margin-bottom: 30px;
+        border-radius: 10px;
+        padding: 10px;
+        background-color: #ffffff;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+      <a class="selected" href="generate-keys.html">Kunci RSA</a>
+      <a href="encrypt-pdf.html">Enkripsi PDF</a>
+      <a href="decrypt-pdf.html">Dekripsi PDF</a>
+    </nav>
+
+    <div class="page">
+      <h1>RSA - Pembangkitan Kunci</h1>
+      <p class="header-description">
+        Klik tombol 'Generate Kunci RSA' di bawah ini untuk mendapatkan kunci publik (public key) dan kunci private (private key).<br>
+        Silahkan lakukan enkripsi dan dekripsi dengan pasangan kunci publik dan private tersebut pada file PDF
+      </p>
+      <button id="button">Generate Kunci RSA</button>
+      <div id="message"></div>
+      <div id="result">
+        <div class="field">
+          <label for="public-key">Kunci Publik RSA</label>
+          <a id="public-key-download" class="download" download="id_rsa.pub">id_rsa.pub</a>
+          <textarea id="public-key-text" rows="10" readonly></textarea>
+        </div>
+        <div class="field">
+          <label for="private-key">Kunci Private RSA</label>
+          <a id="private-key-download" class="download" download="id_rsa">id_rsa</a>
+          <textarea id="private-key-text" rows="10" readonly></textarea>
+        </div>
+      </div>
+    </div>
+
+    <script src="scripts/encoding-helper.js"></script>
+    <script src="scripts/encryption-helper.js"></script>
+    <script>
+      (function () {
+        var publicKeyText = document.getElementById("public-key-text");
+        var publicKeyDownload = document.getElementById("public-key-download");
+        var privateKeyText = document.getElementById("private-key-text");
+        var privateKeyDownload = document.getElementById("private-key-download");
+        var button = document.getElementById("button");
+        var message = document.getElementById("message");
+        var result = document.getElementById("result");
+
+        var success = function (keys) {
+          publicKeyText.value = arrayBufferToPem(keys.publicKeyBuffer, "RSA PUBLIC KEY");
+          publicKeyDownload.href = window.URL.createObjectURL(
+            new Blob([publicKeyText.value], { type: "application/octet-stream" })
+          );
+          privateKeyText.value = arrayBufferToPem(keys.privateKeyBuffer, "RSA PRIVATE KEY");
+          privateKeyDownload.href = window.URL.createObjectURL(
+            new Blob([privateKeyText.value], { type: "application/octet-stream" })
+          );
+          result.style.display = "block";
+          message.innerText = null;
+          button.disabled = false;
+        };
+
+        var error = function (error) {
+          message.innerText = error;
+          button.disabled = false;
+        };
+
+        var process = function () {
+          message.innerText = "Memproses...";
+          button.disabled = true;
+          generateRsaKeys().then(success, error);
+        };
+
+        var warn = function () {
+          if (privateKey.value === "") return;
+          return "Apakah Anda yakin? Kunci Anda akan hilang kecuali jika Anda sudah menyimpannya.";
+        };
+
+        button.addEventListener("click", process);
+        window.onbeforeunload = warn;
+      })();
+    </script>
+  </body>
+</html>
